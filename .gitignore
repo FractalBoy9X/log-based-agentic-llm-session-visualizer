@@ -1,0 +1,20 @@
+# macOS metadata
+._*
+.DS_Store
+
+# Python cache/venv
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Local environment files
+.env
+.env.local
+
+# Generated runtime data
+json_downloader/raw_jsonl/
+agentic-llm-session-visualizer-main/visualization/data/sessions_json/
+

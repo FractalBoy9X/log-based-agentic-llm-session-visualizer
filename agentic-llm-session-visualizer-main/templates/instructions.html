@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Instructions - Agentic Thinking Visualization{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+    .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+        padding: 0.65rem 1.25rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: rgba(148, 163, 184, 0.2);
+        color: #475569;
+        transition: all 0.2s ease;
+    }
+    .tab-btn:hover {
+        background: rgba(148, 163, 184, 0.35);
+    }
+    .tab-btn.active {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+    }
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
+    .markdown-content {
+        line-height: 1.7;
+    }
+    .markdown-content h1 {
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 0.5rem;
+        margin-top: 2rem;
+    }
+    .markdown-content h2 {
+        color: #1e40af;
+        margin-top: 1.5rem;
+    }
+    .markdown-content h3 {
+        color: #3730a3;
+    }
+    .markdown-content code {
+        background: rgba(148, 163, 184, 0.2);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    .markdown-content pre {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+    }
+    .markdown-content pre code {
+        background: transparent;
+        padding: 0;
+    }
+    .markdown-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
+    .markdown-content th,
+    .markdown-content td {
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+    }
+    .markdown-content th {
+        background: rgba(148, 163, 184, 0.2);
+    }
+    .markdown-content blockquote {
+        border-left: 4px solid #2563eb;
+        margin: 1rem 0;
+        padding: 0.5rem 1rem;
+        background: rgba(37, 99, 235, 0.08);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<section class="card">
+    <h1 style="margin-top: 0;">Instructions</h1>
+    
+    <div class="tabs">
+        <a href="?tab=user" class="tab-btn {% if active_tab == 'user' %}active{% endif %}">User Guide</a>
+        <a href="?tab=developer" class="tab-btn {% if active_tab == 'developer' %}active{% endif %}">Developer Guide</a>
+    </div>
+    
+    <div id="user-content" class="tab-content {% if active_tab == 'user' %}active{% endif %}">
+        <div class="markdown-content" id="user-markdown"></div>
+    </div>
+    
+    <div id="developer-content" class="tab-content {% if active_tab == 'developer' %}active{% endif %}">
+        <div class="markdown-content" id="developer-markdown"></div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userMarkdown = "{{ user_guide|escapejs }}";
+    const developerMarkdown = "{{ developer_guide|escapejs }}";
+
+    document.getElementById('user-markdown').innerHTML = marked.parse(userMarkdown);
+    document.getElementById('developer-markdown').innerHTML = marked.parse(developerMarkdown);
+});
+</script>
+{% endblock %}

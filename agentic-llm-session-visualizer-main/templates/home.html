@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Codex Session Visualizer - Home{% endblock %}
+{% block content %}
+<section class="card" style="text-align: center; max-width: 800px; margin: 0 auto;">
+    <p class="badge">Codex Session Visualizer</p>
+    <h1 style="margin: 1rem 0;">Codex Session Visualizer</h1>
+    <p style="color: #4b5563; line-height: 1.7; margin-bottom: 2rem;">
+        A 3D spiral visualization of Codex sessions from <code>{{ codex_sessions_dir_display }}</code>.<br>
+        Import JSONL logs via <strong>Log Manager</strong>, then explore them as interactive 3D charts.
+    </p>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">
+        <a href="{% url 'agentic_thinking_visualization' %}" class="btn">View Visualization</a>
+        <a href="{% url 'log_manager' %}" class="btn" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">Log Manager</a>
+        <a href="{% url 'instructions' %}" class="btn" style="background: linear-gradient(135deg, #10b981, #059669);">Instructions</a>
+    </div>
+
+    {% if available_sessions %}
+    <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 1rem; text-align: left;">
+        <h3 style="margin: 0 0 0.5rem 0; color: #92400e;">Imported Sessions: {{ available_sessions|length }}</h3>
+        <ul style="margin: 0; padding-left: 1.5rem; color: #78350f;">
+            {% for session in available_sessions|slice:":5" %}
+            <li><a href="{% url 'agentic_thinking_visualization' %}?file={{ session.filename }}" style="color: #d97706;">{{ session.filename }}</a></li>
+            {% endfor %}
+            {% if available_sessions|length > 5 %}
+            <li style="color: #92400e;">... and {{ available_sessions|length|add:"-5" }} more</li>
+            {% endif %}
+        </ul>
+    </div>
+    {% else %}
+    <div style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 12px; padding: 1rem;">
+        <p style="margin: 0; color: #0369a1;">
+            No sessions imported yet. Go to <a href="{% url 'log_manager' %}" style="color: #0284c7; text-decoration: underline; font-weight: 600;">Log Manager</a>
+            to import sessions from <code>{{ codex_sessions_dir_display }}</code>.
+        </p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

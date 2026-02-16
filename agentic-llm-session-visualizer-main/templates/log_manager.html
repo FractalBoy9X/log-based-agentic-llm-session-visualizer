@@ -1,0 +1,463 @@
+{% extends "base.html" %}
+{% block title %}Log Manager - Agentic Thinking Visualization{% endblock %}
+{% block extra_head %}
+<style>
+    .log-manager-card {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    .log-manager-card h1 {
+        margin-bottom: 0;
+    }
+    .info-box {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0369a1;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
+    .info-box strong {
+        color: #075985;
+    }
+    .success-box {
+        background: rgba(34, 197, 94, 0.1);
+        color: #166534;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
+    .warning-box {
+        background: rgba(248, 113, 113, 0.14);
+        color: #b91c1c;
+        border: 1px solid rgba(185, 28, 28, 0.35);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
+    .stats-bar {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        padding: 1rem;
+        background: rgba(167, 139, 250, 0.1);
+        border: 1px solid rgba(167, 139, 250, 0.3);
+        border-radius: 12px;
+    }
+    .stat-item {
+        text-align: center;
+    }
+    .stat-item .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #5b21b6;
+    }
+    .stat-item .stat-label {
+        font-size: 0.8rem;
+        color: #7c3aed;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .action-bar {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 12px;
+    }
+    .action-bar button {
+        padding: 0.55rem 1.1rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+        color: #fff;
+    }
+    .action-bar button:hover {
+        transform: translateY(-1px);
+    }
+    .btn-import-selected {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn-import-selected:hover {
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+    }
+    .btn-import-all {
+        background: linear-gradient(135deg, #059669, #047857);
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+    .btn-import-all:hover {
+        box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4);
+    }
+    .btn-select-all, .btn-deselect-all {
+        background: rgba(100, 116, 139, 0.15);
+        color: #475569;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.85rem;
+    }
+    .btn-select-all:hover, .btn-deselect-all:hover {
+        background: rgba(100, 116, 139, 0.25);
+    }
+    .selection-count {
+        font-size: 0.85rem;
+        color: #92400e;
+        margin-left: auto;
+    }
+    .month-group {
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .month-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: rgba(148, 163, 184, 0.12);
+        cursor: pointer;
+        user-select: none;
+    }
+    .month-header:hover {
+        background: rgba(148, 163, 184, 0.2);
+    }
+    .month-header input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #2563eb;
+    }
+    .month-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        color: #1e40af;
+        flex: 1;
+    }
+    .month-header .month-count {
+        font-size: 0.8rem;
+        color: #64748b;
+        background: rgba(100, 116, 139, 0.15);
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+    }
+    .month-header .toggle-icon {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        transition: transform 0.2s;
+    }
+    .month-header.collapsed .toggle-icon {
+        transform: rotate(-90deg);
+    }
+    .session-list {
+        border-top: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .session-list.collapsed {
+        display: none;
+    }
+    .session-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 1rem 0.6rem 2.5rem;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+        font-size: 0.88rem;
+        transition: background 0.15s;
+    }
+    .session-item:last-child {
+        border-bottom: none;
+    }
+    .session-item:hover {
+        background: rgba(37, 99, 235, 0.04);
+    }
+    .session-item input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        accent-color: #2563eb;
+    }
+    .session-item .session-name {
+        flex: 1;
+        font-family: 'Menlo', 'Consolas', monospace;
+        font-size: 0.82rem;
+        color: #334155;
+        word-break: break-all;
+    }
+    .session-item .session-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.78rem;
+        color: #94a3b8;
+        flex-shrink: 0;
+    }
+    .imported-badge {
+        display: inline-block;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        background: rgba(34, 197, 94, 0.15);
+        color: #166534;
+    }
+    .import-messages {
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+    .import-messages li {
+        margin: 0.2rem 0;
+    }
+    .imported-section {
+        background: rgba(14, 165, 233, 0.06);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        border-radius: 12px;
+        padding: 1rem;
+    }
+    .imported-section h3 {
+        margin: 0 0 0.75rem 0;
+        font-size: 1rem;
+        color: #0369a1;
+    }
+    .imported-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+    }
+    .imported-table th {
+        text-align: left;
+        padding: 0.4rem 0.65rem;
+        background: rgba(148, 163, 184, 0.15);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #475569;
+        font-weight: 600;
+    }
+    .imported-table td {
+        padding: 0.45rem 0.65rem;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+        vertical-align: middle;
+    }
+    .imported-table tr:last-child td {
+        border-bottom: none;
+    }
+    .imported-table tr:hover td {
+        background: rgba(37, 99, 235, 0.04);
+    }
+    .imported-table .session-link {
+        font-family: 'Menlo', 'Consolas', monospace;
+        font-size: 0.82rem;
+        color: #2563eb;
+    }
+    .imported-table .session-link:hover {
+        text-decoration: underline;
+    }
+    .btn-delete {
+        padding: 0.25rem 0.65rem;
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+        white-space: nowrap;
+    }
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.18);
+        border-color: rgba(239, 68, 68, 0.45);
+    }
+    .imported-wrapper {
+        max-height: 320px;
+        overflow-y: auto;
+        border-radius: 8px;
+        border: 1px solid rgba(15, 23, 42, 0.07);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<section class="card log-manager-card">
+    <div>
+        <p class="badge">Session Management</p>
+        <h1>Log Manager</h1>
+    </div>
+
+    <div class="info-box">
+        <strong>About Log Manager:</strong><br>
+        Scan <code>{{ codex_sessions_dir_display }}</code> for available JSONL logs and import them to the visualizer.
+        You can import all sessions at once or select specific ones using checkboxes grouped by month.
+    </div>
+
+    {% if import_messages %}
+        <div class="{% if import_status == 'success' %}success-box{% elif import_status == 'error' %}warning-box{% else %}info-box{% endif %}">
+            {% if import_count > 0 %}
+                <strong>Successfully imported {{ import_count }} session{{ import_count|pluralize }}.</strong>
+            {% endif %}
+            <ul class="import-messages" style="margin: 0.5rem 0 0; padding-left: 1.5rem;">
+                {% for msg in import_messages %}
+                    <li>{{ msg }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value">{{ total_available }}</div>
+            <div class="stat-label">Available in source dir</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ total_imported }}</div>
+            <div class="stat-label">Already imported</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ imported_sessions|length }}</div>
+            <div class="stat-label">JSON files ready</div>
+        </div>
+    </div>
+
+    {% if grouped_sessions %}
+    <form method="post" id="import-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="import_selected" id="form-action">
+
+        <div class="action-bar">
+            <button type="submit" class="btn-import-selected" onclick="document.getElementById('form-action').value='import_selected'">
+                Import Selected
+            </button>
+            <button type="submit" class="btn-import-all" onclick="document.getElementById('form-action').value='import_all'">
+                Import All New
+            </button>
+            <button type="button" class="btn-select-all" onclick="selectAll(true)">Select All</button>
+            <button type="button" class="btn-deselect-all" onclick="selectAll(false)">Deselect All</button>
+            <span class="selection-count" id="selection-count">0 selected</span>
+        </div>
+
+        {% for month_key, sessions in grouped_sessions.items %}
+        <div class="month-group" style="margin-top: 0.75rem;">
+            <div class="month-header" onclick="toggleMonth(this)">
+                <input type="checkbox" class="month-checkbox" data-month="{{ month_key }}"
+                       onclick="event.stopPropagation(); toggleMonthCheckboxes(this, '{{ month_key }}')">
+                <h3>{{ month_key }}</h3>
+                <span class="month-count">{{ sessions|length }} session{{ sessions|length|pluralize }}</span>
+                <span class="toggle-icon">&#9660;</span>
+            </div>
+            <div class="session-list" data-month-list="{{ month_key }}">
+                {% for session in sessions %}
+                <div class="session-item">
+                    <input type="checkbox" name="selected_files" value="{{ session.rel_path }}"
+                           class="file-checkbox" data-month="{{ month_key }}"
+                           onchange="updateCounts()"
+                           {% if session.already_imported %}checked disabled{% endif %}>
+                    <span class="session-name">{{ session.filename }}</span>
+                    <span class="session-meta">
+                        <span>{{ session.modified_date }}</span>
+                        <span>{{ session.size_kb }} KB</span>
+                        {% if session.already_imported %}
+                            <span class="imported-badge">imported</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </form>
+    {% else %}
+        <div class="warning-box">
+            No JSONL files found in <code>{{ codex_sessions_dir_display }}</code>.<br>
+            Make sure you have Codex sessions saved in that directory.
+        </div>
+    {% endif %}
+
+    {% if imported_sessions %}
+    <div class="imported-section">
+        <h3>Imported Sessions (ready for visualization) &mdash; {{ imported_sessions|length }}</h3>
+        <div class="imported-wrapper">
+            <table class="imported-table">
+                <thead>
+                    <tr>
+                        <th>Session file</th>
+                        <th style="width: 5rem; text-align: right;">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in imported_sessions %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'agentic_thinking_visualization' %}?file={{ session.filename }}"
+                               class="session-link">{{ session.filename }}</a>
+                        </td>
+                        <td style="text-align: right;">
+                            <form method="post" style="display:inline;"
+                                  onsubmit="return confirm('Delete {{ session.filename }}?\n\nThis only removes the imported JSON — the original JSONL in {{ codex_sessions_dir_display|escapejs }} is NOT affected.')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_session">
+                                <input type="hidden" name="filename" value="{{ session.filename }}">
+                                <button type="submit" class="btn-delete">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<script>
+function toggleMonth(header) {
+    const list = header.nextElementSibling;
+    header.classList.toggle('collapsed');
+    list.classList.toggle('collapsed');
+}
+
+function toggleMonthCheckboxes(monthCheckbox, monthKey) {
+    const checked = monthCheckbox.checked;
+    document.querySelectorAll(`.file-checkbox[data-month="${monthKey}"]`).forEach(cb => {
+        if (!cb.disabled) {
+            cb.checked = checked;
+        }
+    });
+    updateCounts();
+}
+
+function selectAll(state) {
+    document.querySelectorAll('.file-checkbox').forEach(cb => {
+        if (!cb.disabled) {
+            cb.checked = state;
+        }
+    });
+    document.querySelectorAll('.month-checkbox').forEach(cb => {
+        cb.checked = state;
+    });
+    updateCounts();
+}
+
+function updateCounts() {
+    const selected = document.querySelectorAll('.file-checkbox:checked:not(:disabled)').length;
+    document.getElementById('selection-count').textContent = selected + ' selected';
+
+    // Update month checkboxes
+    document.querySelectorAll('.month-checkbox').forEach(monthCb => {
+        const monthKey = monthCb.dataset.month;
+        const allInMonth = document.querySelectorAll(`.file-checkbox[data-month="${monthKey}"]:not(:disabled)`);
+        const checkedInMonth = document.querySelectorAll(`.file-checkbox[data-month="${monthKey}"]:checked:not(:disabled)`);
+        monthCb.checked = allInMonth.length > 0 && allInMonth.length === checkedInMonth.length;
+        monthCb.indeterminate = checkedInMonth.length > 0 && checkedInMonth.length < allInMonth.length;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', updateCounts);
+</script>
+{% endblock %}

@@ -1,0 +1,735 @@
+{% extends "base.html" %}
+{% block title %}Agentic Thinking Visualization{% endblock %}
+{% block extra_head %}
+<style>
+    .agentic-thinking-card {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    .agentic-thinking-card h1 {
+        margin-bottom: 0;
+    }
+    .info-box {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0369a1;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
+    .info-box strong {
+        color: #075985;
+    }
+    .warning-box {
+        background: rgba(248, 113, 113, 0.14);
+        color: #b91c1c;
+        border: 1px solid rgba(185, 28, 28, 0.35);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
+    .meta-info {
+        background: rgba(167, 139, 250, 0.1);
+        border: 1px solid rgba(167, 139, 250, 0.3);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1rem;
+    }
+    .meta-info h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+        color: #5b21b6;
+    }
+    .meta-info p {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+    }
+    .filter-stats {
+        background: rgba(14, 165, 233, 0.1);
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1rem;
+    }
+    .filter-stats ul {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+    }
+    .filter-stats li {
+        margin: 0.25rem 0;
+    }
+    .chart-instructions {
+        border-radius: 12px;
+        background: rgba(14, 165, 233, 0.12);
+        border: 1px solid rgba(14, 165, 233, 0.4);
+        padding: 0.85rem 1rem;
+        color: #0f172a;
+    }
+    .plot-shell {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.85rem;
+        background: #0b1120;
+        border-radius: 18px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 20px 40px rgba(15,23,42,0.25);
+        min-height: 520px;
+        align-items: stretch;
+    }
+    .plot-inner {
+        flex: 1;
+        border-radius: 14px;
+        background: #fff;
+        overflow: hidden;
+        display: flex;
+    }
+    .plot-inner > * {
+        flex: 1;
+        min-width: 0;
+    }
+    .plot-inner .plotly-graph-div {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    .fullscreen-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-width: 160px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.9rem;
+        color: #e2e8f0;
+    }
+    .fullscreen-controls h3 {
+        margin: 0;
+        font-size: 0.85rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #cbd5f5;
+    }
+    .fullscreen-controls button {
+        border: none;
+        border-radius: 10px;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .fullscreen-controls button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
+    }
+    .fullscreen-controls button.is-hidden {
+        display: none;
+    }
+    .plot-shell.is-fullscreen {
+        position: fixed;
+        inset: 0;
+        margin: 0;
+        border-radius: 0;
+        z-index: 1024;
+        background: #000814;
+        width: 100vw;
+        height: 100vh;
+        padding: 0;
+    }
+    .plot-shell.is-fullscreen .plot-inner {
+        border-radius: 0;
+        height: 100%;
+    }
+    .events-table-wrapper {
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 16px;
+        overflow: auto;
+        max-height: 640px;
+    }
+    .events-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    .events-table th,
+    .events-table td {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+        vertical-align: top;
+    }
+    .events-table th {
+        background: rgba(148, 163, 184, 0.18);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+    .events-table code {
+        font-size: 0.85rem;
+    }
+    .event-type-badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #fff;
+    }
+    .event-type-command { background: #22c55e; }
+    .event-type-search { background: #38bdf8; }
+    .event-type-edit { background: #f97316; }
+    .event-type-write { background: #f59e0b; }
+    .event-type-backup { background: #ef4444; }
+    .event-type-note { background: #64748b; }
+    .event-type-read { background: #8b5cf6; }
+    .event-type-analyze { background: #ec4899; }
+    /* Stats bar */
+    .event-stats-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.6rem 0;
+    }
+    .event-stat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: #fff;
+        opacity: 1;
+        transition: opacity 0.15s, transform 0.1s;
+        user-select: none;
+        border: 2px solid transparent;
+    }
+    .event-stat-pill:hover {
+        transform: translateY(-1px);
+    }
+    .event-stat-pill.muted {
+        opacity: 0.35;
+    }
+    /* Search bar */
+    .event-search-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .event-search-bar input {
+        flex: 1;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid rgba(15, 23, 42, 0.2);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        outline: none;
+    }
+    .event-search-bar input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    .event-search-clear {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.85rem;
+        border: 1px solid rgba(15,23,42,0.15);
+        border-radius: 8px;
+        cursor: pointer;
+        background: #fff;
+    }
+    /* Expandable detail row */
+    .event-data-row {
+        cursor: pointer;
+    }
+    .event-data-row:hover td {
+        background: rgba(59, 130, 246, 0.04);
+    }
+    .event-detail-row {
+        display: none;
+        background: #f8fafc;
+    }
+    .event-detail-row.open {
+        display: table-row;
+    }
+    .event-detail-row td {
+        padding: 0.6rem 1rem 0.9rem 2rem;
+        border-bottom: 2px solid rgba(59, 130, 246, 0.15);
+        font-size: 0.88rem;
+    }
+    .event-detail-row pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0.2rem 0 0;
+        font-size: 0.83rem;
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 0.55rem 0.75rem;
+        border-radius: 8px;
+        max-height: 240px;
+        overflow: auto;
+    }
+    .event-detail-label {
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 0.15rem;
+    }
+    .event-detail-section {
+        margin-top: 0.5rem;
+    }
+    .hidden-row {
+        display: none !important;
+    }
+    .raw-trace {
+        border-radius: 12px;
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 0.5rem 0.75rem;
+    }
+    .raw-trace summary {
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .raw-trace pre {
+        margin: 0.5rem 0 0;
+        max-height: 320px;
+        overflow: auto;
+        font-size: 0.9rem;
+    }
+    .file-selector {
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1rem;
+    }
+    .file-selector h3 {
+        margin: 0 0 0.75rem 0;
+        font-size: 1rem;
+        color: #92400e;
+    }
+    .file-selector-form {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .file-selector select {
+        flex: 1;
+        min-width: 250px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid rgba(251, 191, 36, 0.5);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #fff;
+        cursor: pointer;
+    }
+    .file-selector select:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+    .file-selector button {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .file-selector button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+    }
+    .file-selector .session-count {
+        font-size: 0.85rem;
+        color: #92400e;
+    }
+    .file-selector .refresh-button {
+        background: linear-gradient(135deg, #0891b2, #0e7490);
+    }
+    .file-selector .refresh-button:hover {
+        box-shadow: 0 4px 12px rgba(8, 145, 178, 0.35);
+    }
+    @media (max-width: 768px) {
+        .plot-shell {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<section class="card agentic-thinking-card">
+    <div>
+        <p class="badge">Codex Session Visualizer</p>
+        <h1>Codex Session Visualization</h1>
+    </div>
+
+    <div class="info-box">
+        <strong>About this visualization:</strong><br>
+        This view shows a 3D spiral of tool calls from a Codex session.
+        Sessions are parsed from <code>{{ codex_sessions_dir_display }}</code> JSONL files using the <a href="{% url 'log_manager' %}" style="color: #0284c7;">Log Manager</a>.
+        Each point on the spiral represents a single event (search, command, edit, write, backup, note, read, analyze).
+        The Z-axis grows with each step — hover over points to see full details.
+    </div>
+
+    {% if available_sessions %}
+        <div class="file-selector">
+            <h3>Select session to display</h3>
+            <form method="get" class="file-selector-form">
+                <select name="file" id="session-select">
+                    <option value="">-- Latest session (default) --</option>
+                    {% for session in available_sessions %}
+                        <option value="{{ session.filename }}" {% if session.filename == selected_file %}selected{% endif %}>
+                            {{ session.filename }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Load session</button>
+                <span class="session-count">Available sessions: {{ available_sessions|length }}</span>
+            </form>
+            <form method="post" class="file-selector-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="refresh_data">
+                <input type="hidden" name="file" id="refresh-selected-file" value="{{ selected_file }}">
+                <button type="submit" class="refresh-button">Import newest session</button>
+                <span class="session-count">Imports the newest JSONL from <code>{{ codex_sessions_dir_display }}</code>.</span>
+            </form>
+            <span class="session-count" style="margin-top: 0.25rem; display: block;">
+                To import multiple sessions: <a href="{% url 'log_manager' %}" style="color: #0891b2; font-weight: 600;">Log Manager &rarr;</a>
+            </span>
+        </div>
+    {% else %}
+        <div class="file-selector">
+            <h3>No sessions imported yet</h3>
+            <form method="post" class="file-selector-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="refresh_data">
+                <input type="hidden" name="file" id="refresh-selected-file" value="">
+                <button type="submit" class="refresh-button">Import newest session</button>
+            </form>
+            <span class="session-count" style="margin-top: 0.25rem; display: block;">
+                Or import all sessions at once: <a href="{% url 'log_manager' %}" style="color: #0891b2; font-weight: 600;">Log Manager &rarr;</a>
+            </span>
+        </div>
+    {% endif %}
+
+    {% if fetch_message %}
+        <div class="{% if fetch_status == 'success' %}info-box{% else %}warning-box{% endif %}">
+            {{ fetch_message }}
+        </div>
+    {% endif %}
+
+    {% if meta %}
+        <div class="meta-info">
+            <h3>Session Information</h3>
+            {% if meta.label %}<p><strong>Session name:</strong> {{ meta.label }}</p>{% endif %}
+            {% if meta.description %}<p><strong>Description:</strong> {{ meta.description }}</p>{% endif %}
+            {% if meta.generated_at %}<p><strong>Generated:</strong> {{ meta.generated_at }}</p>{% endif %}
+            {% if meta.source %}<p><strong>Source:</strong> {{ meta.source }}</p>{% endif %}
+            {% if meta.agent %}
+                <p><strong>Agent:</strong>
+                    {% if meta.agent.type %}{{ meta.agent.type|upper }}{% endif %}
+                    {% if meta.agent.model %} ({{ meta.agent.model }}){% endif %}
+                    {% if meta.agent.provider %} - {{ meta.agent.provider }}{% endif %}
+                </p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if log_path %}
+        <p><strong>Active log:</strong> <code>{{ log_path }}</code></p>
+    {% endif %}
+
+    {% if error_message %}
+        <div class="warning-box">{{ error_message }}</div>
+    {% endif %}
+
+    {% if filter_stats.total > 0 %}
+        <div class="filter-stats">
+            <strong>Event statistics:</strong>
+            <ul>
+                <li>Total events: <strong>{{ filter_stats.total|floatformat:0 }}</strong></li>
+                <li>Filtered: <strong>{{ filter_stats.filtered|floatformat:0 }}</strong></li>
+                <li>Displayed: <strong>{{ filter_stats.remaining|floatformat:0 }}</strong></li>
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="chart-instructions">
+        <strong>How to read the chart:</strong>
+        <p>{{ chart_instructions }}</p>
+    </div>
+
+    {% if plot_div %}
+        <div class="plot-shell" data-plot-shell>
+            <div class="fullscreen-controls">
+                <h3>View</h3>
+                <button type="button" class="enter-fullscreen-btn">Fullscreen</button>
+                <button type="button" class="exit-fullscreen-btn is-hidden">Exit</button>
+            </div>
+            <div class="plot-inner">
+                {{ plot_div|safe }}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if events %}
+        <div>
+            <h2>Agent Events ({{ events|length }})</h2>
+            <!-- Stats bar (populated by JS) -->
+            <div class="event-stats-bar" id="event-stats-bar"></div>
+            <!-- Search -->
+            <div class="event-search-bar">
+                <input type="text" id="event-search" placeholder="Search events (label, detail)…" autocomplete="off">
+                <button class="event-search-clear" id="event-search-clear" title="Clear">✕ Clear</button>
+            </div>
+            <div class="events-table-wrapper">
+                <table class="events-table" id="events-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Label</th>
+                            <th>Source</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                            <tr class="event-data-row"
+                                data-event-type="{{ event.event_type }}"
+                                data-label="{{ event.label }}"
+                                data-detail="{{ event.detail }}"
+                                data-thinking="{{ event.thinking|default:'' }}"
+                                data-source="{{ event.source|default:'' }}"
+                                data-timestamp="{{ event.timestamp|default:'' }}"
+                                data-index="{{ event.event_index }}">
+                                <td>{{ event.event_index }}</td>
+                                <td>
+                                    <span class="event-type-badge event-type-{{ event.event_type }}">
+                                        {{ event.event_type }}
+                                    </span>
+                                </td>
+                                <td>{{ event.label }}</td>
+                                <td>{{ event.source|default:"-" }}</td>
+                                <td>{{ event.timestamp|default:"-" }}</td>
+                            </tr>
+                            <tr class="event-detail-row" id="detail-{{ forloop.counter0 }}">
+                                <td colspan="5">
+                                    <div class="event-detail-section">
+                                        <div class="event-detail-label">Label</div>
+                                        <pre id="detail-label-{{ forloop.counter0 }}"></pre>
+                                    </div>
+                                    <div class="event-detail-section" id="detail-detail-wrap-{{ forloop.counter0 }}" style="display:none">
+                                        <div class="event-detail-label">Detail</div>
+                                        <pre id="detail-detail-{{ forloop.counter0 }}"></pre>
+                                    </div>
+                                    <div class="event-detail-section" id="detail-thinking-wrap-{{ forloop.counter0 }}" style="display:none">
+                                        <div class="event-detail-label">Thinking</div>
+                                        <pre id="detail-thinking-{{ forloop.counter0 }}"></pre>
+                                    </div>
+                                    <div class="event-detail-section" style="font-size:0.8rem; color:#64748b; margin-top:0.4rem">
+                                        <span id="detail-meta-{{ forloop.counter0 }}"></span>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if raw_log %}
+        <details class="raw-trace">
+            <summary>Raw JSON (click to expand)</summary>
+            <pre>{{ raw_log|escape }}</pre>
+        </details>
+    {% endif %}
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // ── session selector sync ──────────────────────────────────────────
+        const sessionSelect = document.getElementById('session-select');
+        const refreshSelectedFile = document.getElementById('refresh-selected-file');
+        if (sessionSelect && refreshSelectedFile) {
+            const syncSelectedFile = () => { refreshSelectedFile.value = sessionSelect.value; };
+            syncSelectedFile();
+            sessionSelect.addEventListener('change', syncSelectedFile);
+        }
+
+        // ── fullscreen ────────────────────────────────────────────────────
+        document.querySelectorAll('[data-plot-shell]').forEach((shell) => {
+            const enterBtn = shell.querySelector('.enter-fullscreen-btn');
+            const exitBtn  = shell.querySelector('.exit-fullscreen-btn');
+            const plotInner = shell.querySelector('.plot-inner');
+            const graphDiv  = shell.querySelector('.plotly-graph-div');
+            if (!enterBtn || !exitBtn || !plotInner || !graphDiv) return;
+
+            const requestFullscreen = () => {
+                if (shell.requestFullscreen) return shell.requestFullscreen();
+                if (shell.webkitRequestFullscreen) return shell.webkitRequestFullscreen();
+            };
+            const exitFullscreen = () => {
+                if (document.exitFullscreen) return document.exitFullscreen();
+                if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+            };
+            const resizeGraph = () => {
+                const rect = plotInner.getBoundingClientRect();
+                Plotly.relayout(graphDiv, { width: rect.width, height: rect.height })
+                    .then(() => Plotly.Plots.resize(graphDiv));
+            };
+            const syncFullscreenState = () => {
+                const isFs = document.fullscreenElement === shell;
+                shell.classList.toggle('is-fullscreen', isFs);
+                enterBtn.classList.toggle('is-hidden', isFs);
+                exitBtn.classList.toggle('is-hidden', !isFs);
+                requestAnimationFrame(resizeGraph);
+            };
+            enterBtn.addEventListener('click', () => {
+                shell.classList.add('is-fullscreen');
+                enterBtn.classList.add('is-hidden');
+                exitBtn.classList.remove('is-hidden');
+                requestFullscreen();
+                requestAnimationFrame(resizeGraph);
+            });
+            exitBtn.addEventListener('click', () => {
+                shell.classList.remove('is-fullscreen');
+                exitBtn.classList.add('is-hidden');
+                enterBtn.classList.remove('is-hidden');
+                exitFullscreen();
+                requestAnimationFrame(resizeGraph);
+            });
+            document.addEventListener('fullscreenchange', syncFullscreenState);
+            window.addEventListener('resize', () => requestAnimationFrame(resizeGraph));
+            setTimeout(resizeGraph, 60);
+        });
+
+        // ── events table: stats bar + filter + search + expand ───────────
+        const statsBar  = document.getElementById('event-stats-bar');
+        const searchInput = document.getElementById('event-search');
+        const searchClear = document.getElementById('event-search-clear');
+        const dataRows  = document.querySelectorAll('.event-data-row');
+
+        if (!statsBar || !dataRows.length) return;
+
+        // type → color map (must match CSS)
+        const TYPE_COLORS = {
+            command: '#22c55e', search: '#38bdf8', edit: '#f97316',
+            write: '#f59e0b', backup: '#ef4444', note: '#64748b',
+            read: '#8b5cf6', analyze: '#ec4899',
+        };
+
+        // 1. Count events per type
+        const counts = {};
+        dataRows.forEach(row => {
+            const t = row.dataset.eventType || 'note';
+            counts[t] = (counts[t] || 0) + 1;
+        });
+
+        // 2. Build stats pills
+        const activeTypes = new Set(Object.keys(counts)); // all active by default
+        Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([type, count]) => {
+            const color = TYPE_COLORS[type] || '#94a3b8';
+            const pill = document.createElement('span');
+            pill.className = 'event-stat-pill';
+            pill.style.background = color;
+            pill.dataset.type = type;
+            pill.textContent = `${type.toUpperCase()} ×${count}`;
+            pill.title = `Click to toggle ${type} events`;
+            pill.addEventListener('click', () => {
+                if (activeTypes.has(type)) {
+                    activeTypes.delete(type);
+                    pill.classList.add('muted');
+                } else {
+                    activeTypes.add(type);
+                    pill.classList.remove('muted');
+                }
+                applyFilters();
+            });
+            statsBar.appendChild(pill);
+        });
+
+        // 3. Filter logic: combines type filter + text search
+        const applyFilters = () => {
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+            dataRows.forEach((row, i) => {
+                const type = row.dataset.eventType || 'note';
+                const label = (row.dataset.label || '').toLowerCase();
+                const detail = (row.dataset.detail || '').toLowerCase();
+                const typeOk = activeTypes.has(type);
+                const textOk = !query || label.includes(query) || detail.includes(query);
+                const hide = !typeOk || !textOk;
+                row.classList.toggle('hidden-row', hide);
+                // also hide its detail expansion row
+                const detailRow = document.getElementById(`detail-${i}`);
+                if (detailRow) {
+                    if (hide) { detailRow.classList.remove('open'); }
+                    detailRow.classList.toggle('hidden-row', hide);
+                }
+            });
+        };
+
+        // 4. Search input
+        if (searchInput) {
+            searchInput.addEventListener('input', applyFilters);
+        }
+        if (searchClear) {
+            searchClear.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                applyFilters();
+            });
+        }
+
+        // 5. Expandable rows
+        dataRows.forEach((row, i) => {
+            row.addEventListener('click', () => {
+                const detailRow = document.getElementById(`detail-${i}`);
+                if (!detailRow) return;
+                const isOpen = detailRow.classList.contains('open');
+                if (!isOpen) {
+                    // Populate detail row contents lazily
+                    const labelEl    = document.getElementById(`detail-label-${i}`);
+                    const detailEl   = document.getElementById(`detail-detail-${i}`);
+                    const thinkingEl = document.getElementById(`detail-thinking-${i}`);
+                    const metaEl     = document.getElementById(`detail-meta-${i}`);
+                    const detailWrap    = document.getElementById(`detail-detail-wrap-${i}`);
+                    const thinkingWrap  = document.getElementById(`detail-thinking-wrap-${i}`);
+
+                    if (labelEl) labelEl.textContent = row.dataset.label || '';
+
+                    const det = row.dataset.detail || '';
+                    if (det && detailEl && detailWrap) {
+                        detailEl.textContent = det;
+                        detailWrap.style.display = '';
+                    }
+                    const thn = row.dataset.thinking || '';
+                    if (thn && thinkingEl && thinkingWrap) {
+                        thinkingEl.textContent = thn;
+                        thinkingWrap.style.display = '';
+                    }
+                    if (metaEl) {
+                        const src = row.dataset.source || '';
+                        const ts  = row.dataset.timestamp || '';
+                        metaEl.textContent = [src, ts].filter(Boolean).join(' | ');
+                    }
+                }
+                detailRow.classList.toggle('open', !isOpen);
+            });
+        });
+    });
+</script>
+{% endblock %}
