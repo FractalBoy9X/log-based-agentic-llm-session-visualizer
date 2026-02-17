@@ -1,61 +1,61 @@
 # Codex Log Tool v2
 
-Ulepszona wersja narzedzia do wizualizacji logow agentow LLM.
+An improved version of the tool for visualizing LLM agent logs.
 
-## Co nowego w v2.2
+## What's New in v2.2
 
-- **Lepsza jakosc danych** — tool calle (np. `apply_patch`, `shell`) pokazuja teraz podglad komendy/patcha zamiast samej nazwy narzedzia
-- **Stats bar** w tabeli eventow — kolorowe pigulki z liczba eventow per typ; klikniecie ukrywa/pokazuje dany typ
-- **Wyszukiwarka** nad tabela — filtruje wiersze po tresci label/detail w czasie rzeczywistym
-- **Rozwijane wiersze** — klikniecie wiersza otwiera panel ze pelna trescia (label, detail, thinking, metadane)
-- **Uproszczona tabela** — 7 → 5 kolumn (Detail i Thinking przeniesione do panelu expand)
-- **Wiekszy hover tooltip** w spirali 3D (label 80→120, detail 120→300 znakow)
+- **Better data quality** — tool calls (e.g., `apply_patch`, `shell`) now show a preview of the command/patch instead of just the tool name
+- **Stats bar** in the events table — colored pills with the number of events per type; clicking hides/shows a given type
+- **Search bar** above the table — filters rows by label/detail content in real time
+- **Expandable rows** — clicking a row opens a panel with full content (label, detail, thinking, metadata)
+- **Simplified table** — 7 → 5 columns (Detail and Thinking moved to the expand panel)
+- **Larger hover tooltip** in the 3D spiral (label 80→120, detail 120→300 characters)
 
-## Co nowego w v2.1
+## What's New in v2.1
 
-- **Wsparcie dla starszych formatow JSONL** — automatyczne wykrywanie i parsowanie 3 wersji logow Codex CLI (wrzesien 2025, pazdziernik–styczen 2026, luty 2026+)
-- **Naprawa pustych sesji** — wszystkie importy z 0 eventami zostaly naprawione
+- **Support for older JSONL formats** — automatic detection and parsing of 3 versions of Codex CLI logs (September 2025, October–January 2026, February 2026+)
+- **Empty session fix** — all imports with 0 events have been fixed
 
-## Co nowego w v2.0
+## What's New in v2.0
 
-- **Log Manager** (`/logs/`) - nowa strona do zarzadzania logami:
-  - Skanowanie katalogu z `CODEX_SESSIONS_DIR` (domyslnie `~/.codex/sessions/`) i wyswietlanie dostepnych plikow JSONL
-  - Grupowanie wg miesiecy z checkboxami
-  - Import wybranych lub WSZYSTKICH sesji jednym kliknieciem
-  - Oznaczanie juz zaimportowanych plikow
-- **Lepsza organizacja plikow** - JSONy w `visualization/data/sessions_json/`
-- **Nowe opcje CLI** - `--all` (import wszystkich) i `--file=NAZWA` (import konkretnego)
+- **Log Manager** (`/logs/`) — a new page for managing logs:
+  - Scanning the directory from `CODEX_SESSIONS_DIR` (default `~/.codex/sessions/`) and displaying available JSONL files
+  - Grouping by months with checkboxes
+  - Importing selected or ALL sessions with a single click
+  - Marking already imported files
+- **Better file organization** — JSONs in `visualization/data/sessions_json/`
+- **New CLI options** — `--all` (import all) and `--file=NAME` (import a specific one)
 
-## Struktura
+## Structure
 
 ```text
 codex_log_tool_v2/
-├── run_prettify.sh          # Glowny skrypt (--serve, --all, --file=...)
-├── codex_prettify.py         # Parser i konwerter JSONL -> JSON
-├── jsonl_deminify.py         # Pomocniczy deminifikator
+├── run_prettify.sh          # Main script (--serve, --all, --file=...)
+├── codex_prettify.py         # Parser and converter JSONL -> JSON
+├── jsonl_deminify.py         # Helper deminifier
 ├── requirements.txt
 ├── json_downloader/
-│   ├── download_jsons.sh     # Pobieranie (wrapper na run_prettify.sh)
-│   └── raw_jsonl/            # Surowe pliki JSONL
+│   ├── download_jsons.sh     # Downloading (wrapper for run_prettify.sh)
+│   └── raw_jsonl/            # Raw JSONL files
 └── agentic-llm-session-visualizer-main/
     ├── manage.py
-    ├── agentic_app/          # Konfiguracja Django
-    ├── templates/            # Szablony HTML
+    ├── agentic_app/          # Django configuration
+    ├── templates/            # HTML templates
     │   ├── base.html
     │   ├── home.html
     │   ├── agentic_thinking_visualization.html
-    │   ├── log_manager.html  # NOWY - zarzadzanie logami
+    │   ├── log_manager.html  # NEW - log management
     │   └── instructions.html
     └── visualization/
-        ├── loader.py         # Ladowanie danych JSON
-        ├── views.py          # Widoki Django
-        ├── log_manager.py    # NOWY - skanowanie i import logow
+        ├── loader.py         # JSON data loading
+        ├── views.py          # Django views
+        ├── log_manager.py    # NEW - log scanning and importing
         ├── data/
-        │   └── sessions_json/  # Przetworzone JSONy (wizualizacja czyta stad)
+        │   └── sessions_json/  # Processed JSONs (visualization reads from here)
         └── instructions/
 ```
 
-## Szybki start
+## Quick Start
 
 ```bash
 cd codex_log_tool_v2
@@ -63,59 +63,61 @@ cp .env.example .env
 ./run_prettify.sh --serve
 ```
 
-Nastepnie otworz: `http://127.0.0.1:8000/`
+Then open: `http://127.0.0.1:8000/`
 
-## Konfiguracja przez zmienne srodowiskowe
+## Configuration via Environment Variables
 
-Projekt korzysta z env (bez hardcoded sciezek/secrets).
+The project uses environment variables (no hardcoded paths/secrets).
 
-Najwygodniej:
+The easiest way:
 
 ```bash
 cp .env.example .env
 ```
 
-Najwazniejsze zmienne:
+Key variables:
 
-- `CODEX_SESSIONS_DIR` - katalog z plikami `.jsonl` (domyslnie `~/.codex/sessions`)
-- `DJANGO_HOST` - host serwera dev (`127.0.0.1`)
-- `DJANGO_PORT` - port serwera dev (`8000`)
-- `DJANGO_DEBUG` - `true/false`
-- `DJANGO_ALLOWED_HOSTS` - lista hostow rozdzielona przecinkami
-- `DJANGO_SECRET_KEY` - klucz Django (zmien obowiazkowo poza lokalnym dev)
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CODEX_SESSIONS_DIR` | Directory with `.jsonl` files | `~/.codex/sessions` |
+| `DJANGO_HOST` | Dev server host | `127.0.0.1` |
+| `DJANGO_PORT` | Dev server port | `8000` |
+| `DJANGO_DEBUG` | Debug mode | `true` |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated list of hosts | — |
+| `DJANGO_SECRET_KEY` | Django secret key (must be changed outside of local dev) | — |
 
-## Import logow
+## Importing Logs
 
-### Przez interfejs webowy (zalecane)
+### Via the Web Interface (recommended)
 
-1. Otworz `http://127.0.0.1:8000/logs/`
-2. Zaznacz checkboxami sesje do importu (wg miesiecy lub pojedynczo)
-3. Kliknij **Import Selected** lub **Import All New**
+1. Open `http://127.0.0.1:8000/logs/`
+2. Select sessions to import using checkboxes (by month or individually)
+3. Click **Import Selected** or **Import All New**
 
-### Przez CLI
+### Via CLI
 
 ```bash
-# Import najnowszego loga (domyslne zachowanie)
+# Import the latest log (default behavior)
 ./run_prettify.sh
 
-# Import WSZYSTKICH logow
+# Import ALL logs
 ./run_prettify.sh --all
 
-# Import konkretnego pliku
+# Import a specific file
 ./run_prettify.sh --file=2026/02/14/rollout-2026-02-14T14-00-36-019c5c3d.jsonl
 
-# Import + uruchom serwer
+# Import + start the server
 ./run_prettify.sh --all --serve
 ```
 
-### Przez dedykowany skrypt
+### Via the Dedicated Script
 
 ```bash
-./json_downloader/download_jsons.sh          # najnowszy
-./json_downloader/download_jsons.sh --all    # wszystkie
+./json_downloader/download_jsons.sh          # latest
+./json_downloader/download_jsons.sh --all    # all
 ```
 
-## Reczne uruchomienie wizualizera
+## Manual Visualizer Setup
 
 ```bash
 cd codex_log_tool_v2
@@ -126,11 +128,11 @@ cd agentic-llm-session-visualizer-main
 python manage.py runserver
 ```
 
-## Strony
+## Pages
 
-| URL | Opis |
-|-----|------|
-| `/` | Strona glowna z lista sesji |
-| `/visualization/` | Wizualizacja 3D spirali |
-| `/logs/` | **NOWY** - zarzadzanie logami (import, checkboxy) |
-| `/instructions/` | Instrukcje uzytkowania |
+| URL | Description |
+|-----|-------------|
+| `/` | Home page with session list |
+| `/visualization/` | 3D spiral visualization |
+| `/logs/` | **NEW** — log management (import, checkboxes) |
+| `/instructions/` | Usage instructions |
